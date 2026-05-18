@@ -10,10 +10,19 @@ use Str;
 class RoomController extends Controller
 {
 
-    public function getallroom(){
+    public function getAllRoom(){
         $rooms = Room::all();
         return response()->json($rooms);
     }
+
+    public function getRoom($id){
+        $room = Room::find($id);
+        return response()->json($room);
+    }
+
+    // public function addPlace(Request $request){
+    //     $uuid 
+    // }
 
     public function createRoom(Request $request){
         $uuid = Str::uuid();
