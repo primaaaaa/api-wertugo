@@ -13,15 +13,24 @@ Route::get('/user', function (Request $request) {
 
 // Register, Login, Logout, Get Users
 Route::post('/register', [AccountController::class, 'store']);
-Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
+Route::post('/login', [AccountController::class, 'login']);
 
-// Room
-Route::post('/room/createroom', [RoomController::class, 'createroom']);
-Route::get('/room/getallroom', [RoomController::class, 'getallroom']);
-Route::get('/room/getroom/{id}', [RoomController::class, 'getroom']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AccountController::class, 'logout']);
+    Route::get('/profile', [AccountController::class, 'getProfile']);
+    Route::put('/profile/update', [AccountController::class, 'updateProfile']);
 
-// Route untuk eksplorasi tempat wisata
-Route::get('/places', [PlaceController::class, 'index']);
-Route::get('/places/search', [PlaceController::class, 'search']);
-Route::get('/places/category/{category}', [PlaceController::class, 'filterByCategory']);
-Route::get('/places/{id}', [PlaceController::class, 'show']);
+
+    Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
+
+    // Room
+    Route::post('/room/createroom', [RoomController::class, 'createroom']);
+    Route::get('/room/getallroom', [RoomController::class, 'getallroom']);
+    Route::get('/room/getroom/{id}', [RoomController::class, 'getroom']);
+
+    // Route untuk eksplorasi tempat wisata
+    Route::get('/places', [PlaceController::class, 'index']);
+    Route::get('/places/search', [PlaceController::class, 'search']);
+    Route::get('/places/category/{category}', [PlaceController::class, 'filterByCategory']);
+    Route::get('/places/{id}', [PlaceController::class, 'show']);
+});

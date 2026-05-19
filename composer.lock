@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "75759a4fde11e2a6564bf362cb01c5d4",
+    "content-hash": "9b27f7bf4e2e4e7a9d506e92383b8c37",
     "packages": [
         {
             "name": "brick/math",
@@ -1336,16 +1336,16 @@
         },
         {
             "name": "laravel/sanctum",
-            "version": "v4.3.1",
+            "version": "v4.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/sanctum.git",
-                "reference": "e3b85d6e36ad00e5db2d1dcc27c81ffdf15cbf76"
+                "reference": "2a9bccc18e9907808e0018dd15fa643937886b1e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/sanctum/zipball/e3b85d6e36ad00e5db2d1dcc27c81ffdf15cbf76",
-                "reference": "e3b85d6e36ad00e5db2d1dcc27c81ffdf15cbf76",
+                "url": "https://api.github.com/repos/laravel/sanctum/zipball/2a9bccc18e9907808e0018dd15fa643937886b1e",
+                "reference": "2a9bccc18e9907808e0018dd15fa643937886b1e",
                 "shasum": ""
             },
             "require": {
@@ -1395,7 +1395,7 @@
                 "issues": "https://github.com/laravel/sanctum/issues",
                 "source": "https://github.com/laravel/sanctum"
             },
-            "time": "2026-02-07T17:19:31+00:00"
+            "time": "2026-04-30T11:46:25+00:00"
         },
         {
             "name": "laravel/serializable-closure",
@@ -2085,26 +2085,26 @@
         },
         {
             "name": "mongodb/laravel-mongodb",
-            "version": "5.6.0",
+            "version": "5.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mongodb/laravel-mongodb",
-                "reference": "0828c481e166793fc359226b9de1eb836082aa45"
+                "reference": "6e371e8e6deb9193f99a84c578e6c9d0a960e43a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mongodb/laravel-mongodb/zipball/0828c481e166793fc359226b9de1eb836082aa45",
-                "reference": "0828c481e166793fc359226b9de1eb836082aa45",
+                "url": "https://api.github.com/repos/mongodb/laravel-mongodb/zipball/6e371e8e6deb9193f99a84c578e6c9d0a960e43a",
+                "reference": "6e371e8e6deb9193f99a84c578e6c9d0a960e43a",
                 "shasum": ""
             },
             "require": {
                 "composer-runtime-api": "^2.0.0",
                 "ext-mongodb": "^1.21|^2",
-                "illuminate/cache": "^10.36|^11|^12",
-                "illuminate/container": "^10.0|^11|^12",
-                "illuminate/database": "^10.30|^11|^12",
-                "illuminate/events": "^10.0|^11|^12",
-                "illuminate/support": "^10.0|^11|^12",
+                "illuminate/cache": "^10.36|^11|^12|^13.0",
+                "illuminate/container": "^10.0|^11|^12|^13.0",
+                "illuminate/database": "^10.30|^11|^12|^13.0",
+                "illuminate/events": "^10.0|^11|^12|^13.0",
+                "illuminate/support": "^10.0|^11|^12|^13.0",
                 "mongodb/mongodb": "^1.21|^2",
                 "php": "^8.1"
             },
@@ -2115,15 +2115,15 @@
                 "jenssegers/mongodb": "self.version"
             },
             "require-dev": {
-                "doctrine/coding-standard": "12.0.x-dev",
+                "doctrine/coding-standard": "^12.0",
                 "laravel/scout": "^10.3",
                 "league/flysystem-gridfs": "^3.28",
                 "league/flysystem-read-only": "^3.0",
                 "mockery/mockery": "^1.4.4",
-                "orchestra/testbench": "^8.0|^9.0|^10.0",
-                "phpstan/phpstan": "^1.10",
-                "phpunit/phpunit": "^10.3|^11.5.3",
-                "rector/rector": "^1.2",
+                "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+                "phpstan/phpstan": "^1.10|^2.1",
+                "phpunit/phpunit": "^10.3|^11.5.3|^12.5.12",
+                "rector/rector": "^1.2|^2.3",
                 "spatie/laravel-query-builder": "^5.6|^6"
             },
             "suggest": {
@@ -2188,7 +2188,7 @@
                 "issues": "https://www.mongodb.com/support",
                 "security": "https://www.mongodb.com/security"
             },
-            "time": "2026-02-12T13:07:48+00:00"
+            "time": "2026-04-15T12:18:12+00:00"
         },
         {
             "name": "mongodb/mongodb",
@@ -8635,12 +8635,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
 }
