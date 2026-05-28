@@ -11,7 +11,7 @@ class Account extends Authenticatable // extends Authenticatable, bukan Model
     use HasApiTokens, Notifiable;
 
     protected $connection = 'mongodb';
-    protected $collection = 'account'; // sesuaikan dengan nama collection Anda
+    protected $collection = 'accounts'; // sesuaikan dengan nama collection Anda
 
     protected $primaryKey = '_id';
     public $incrementing = false;

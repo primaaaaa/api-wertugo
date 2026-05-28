@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PlaceController;  // ← Pastikan ini ada
@@ -15,13 +16,18 @@ Route::get('/user', function (Request $request) {
 Route::post('/register', [AccountController::class, 'store']);
 Route::post('/login', [AccountController::class, 'login']);
 
+// Untuk tahap development, nanti dipindahin lagi ke dalam middleware
+Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
+Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AccountController::class, 'logout']);
     Route::get('/profile', [AccountController::class, 'getProfile']);
     Route::put('/profile/update', [AccountController::class, 'updateProfile']);
 
 
-    Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
+    
 
     // Room
     Route::post('/room/createroom', [RoomController::class, 'createroom']);
