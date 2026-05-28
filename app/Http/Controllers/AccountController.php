@@ -12,7 +12,7 @@ class AccountController extends Controller
 {
     public function getAllUsers()
     {
-        $users = Account::all();
+        $users = Account::paginate(10);
         return response()->json($users);
     }
 
