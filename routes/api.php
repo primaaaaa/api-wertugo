@@ -19,7 +19,7 @@ Route::post('/login', [AccountController::class, 'login']);
 // Untuk tahap development, nanti dipindahin lagi ke dalam middleware
 Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
 Route::get('/admin/dashboard', [DashboardController::class, 'index']);
-
+Route::get('/umkm/getumkm', [AccountController::class, 'getAllUmkm']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AccountController::class, 'logout']);

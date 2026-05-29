@@ -16,6 +16,11 @@ class AccountController extends Controller
         return response()->json($users);
     }
 
+    public function getAllUmkm(){
+        $umkm = Account::where('role', 'umkm')->paginate(10);
+        return response()->json($umkm);
+    }
+
     public function store(Request $request)
     {
         // Perbaiki validasi agar sesuai dengan field di collection
