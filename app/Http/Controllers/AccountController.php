@@ -12,13 +12,46 @@ class AccountController extends Controller
 {
     public function getAllUsers()
     {
-        $users = Account::paginate(10);
-        return response()->json($users);
+        $baseQuery = Account::where('role', 'user');
+        
+        $totalActiveUser = (clone $baseQuery)->where('account_status', 'active')->count();
+        $totalSuspendedUser = (clone $baseQuery)->whereIn('account_status', ['banned', 'suspended'])->count();
+
+        $users = (clone $baseQuery)->paginate(10);
+        return response()->json([
+            'stats' => [
+                'total_active' => $totalActiveUser,
+                'total_suspended' => $totalSuspendedUser
+            ],
+            'data_user' => $users
+        ]);
     }
 
     public function getAllUmkm(){
-        $umkm = Account::where('role', 'umkm')->paginate(10);
-        return response()->json($umkm);
+        // Base query agar tidak menulis ulang kondisi role berulang kali
+        $baseQuery = Account::where('role', 'umkm');
+
+        $totalUmkm = (clone $baseQuery)->where('account_status', 'active')->count();
+        
+        $verifiedUmkm = (clone $baseQuery)
+            ->where('account_status', 'active')
+            ->where('verification_status', 'verified')
+            ->count();
+            
+        $suspendedUmkm = (clone $baseQuery)
+            ->whereIn('account_status', ['suspended', 'banned'])
+            ->count();
+            
+        $umkm = (clone $baseQuery)->paginate(10);
+
+        return response()->json([
+            'stats' => [
+                'total_umkm' => $totalUmkm,
+                'verified_umkm' => $verifiedUmkm,
+                'suspended_umkm' => $suspendedUmkm
+            ],
+            'data_umkm' => $umkm
+        ]);
     }
 
     public function store(Request $request)

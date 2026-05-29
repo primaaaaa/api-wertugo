@@ -9,11 +9,12 @@ class DashboardController extends Controller
 {
     public function index(){
         $totalUser = Account::where('role', 'user')->count();
-        // $totalUmkm
+        $totalUmkm = Account::where('role', 'umkm')->count();
         // $totalVerifikasi
 
         return response()->json([
-            'total_user' => $totalUser
+            'total_user' => $totalUser,
+            'total_umkm' => $totalUmkm
         ]);
 
 
