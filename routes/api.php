@@ -1,7 +1,8 @@
 <?php
-
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UmkmController;
 use App\Http\Controllers\UserController;
@@ -28,8 +29,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile/update', [AccountController::class, 'updateProfile']);
     Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
     Route::get('/admin/dashboard', [DashboardController::class, 'index']);
-    
+    Route::get('/reports/getallreport', [ReportController::class, 'index']);
 
+
+    // Report Notice
+    Route::put('/reports/{id}/tindak', [ReportController::class, 'tindakLaporan']);
+
+    // Komentar
+    Route::get('/umkm/{umkm_id}/comments', [CommentController::class, 'getUmkmComments']);
+    Route::post('/comments', [CommentController::class, 'store']);
 
     //verifikasi Umkm
     // Route::get
