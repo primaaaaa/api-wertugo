@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Verification;
 use App\Models\Umkm; // UBAH: Menggunakan model Umkm, bukan Account
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class VerificationController extends Controller
 {
@@ -140,6 +141,86 @@ class VerificationController extends Controller
                     'persentase' => ($dokumenTerunggah / $totalDokumen) * 100
                 ]
             ]
+        ]);
+    }
+
+    public function uploadDocuments(Request $request)
+    {
+        // 1. Validasi file (semua opsional)
+        $validator = Validator::make($request->all(), [
+            'nib_dokumen' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'npwp_dokumen' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'legalitas_bangunan_dokumen' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'sertifikat_halal_dokumen' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'sertifikat_usaha_pariwisata_dokumen' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // 2. Cari UMKM milik user yang login
+        $user = $request->user();
+        $umkm = \App\Models\Umkm::where('user_id', $user->id)->first();
+
+        if (!$umkm) {
+            return response()->json([
+                'success' => false,
+                'message' => 'UMKM tidak ditemukan. Silakan daftarkan usaha terlebih dahulu.'
+            ], 404);
+        }
+
+        // 3. Upload file dan simpan path-nya
+        $data = [];
+        $fields = [
+            'nib_dokumen',
+            'npwp_dokumen',
+            'legalitas_bangunan_dokumen',
+            'sertifikat_halal_dokumen',
+            'sertifikat_usaha_pariwisata_dokumen'
+        ];
+
+        foreach ($fields as $field) {
+            if ($request->hasFile($field)) {
+                $path = $request->file($field)->store('verification_docs', 'public');
+                $data[$field] = $path;
+            }
+        }
+
+        // 4. Simpan atau update data verifikasi
+        $verification = Verification::updateOrCreate(
+            ['id_umkm' => $umkm->id],
+            array_merge($data, ['verification_status' => 'pending'])
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dokumen berhasil diunggah. Menunggu verifikasi admin.',
+            'data' => $verification
+        ], 200);
+    }
+
+    public function checkStatus(Request $request)
+    {
+        $user = $request->user();
+        $umkm = \App\Models\Umkm::where('user_id', $user->id)->first();
+
+        if (!$umkm) {
+            return response()->json([
+                'success' => false,
+                'message' => 'UMKM tidak ditemukan'
+            ], 404);
+        }
+
+        $verification = Verification::where('id_umkm', $umkm->id)->first();
+        $status = $verification ? $verification->verification_status : 'not_submitted';
+
+        return response()->json([
+            'success' => true,
+            'verification_status' => $status
         ]);
     }
 }
