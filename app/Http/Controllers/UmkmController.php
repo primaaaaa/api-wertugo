@@ -10,10 +10,39 @@ use Illuminate\Support\Facades\Storage; // Ditambahkan
 
 class UmkmController extends Controller
 {
-    /**
-     * POST: /api/umkm/place
-     * Mendaftarkan entitas tempat usaha baru (maksimal 1 per akun)
-     */
+    public function index(Request $request)
+    {
+        // 1. Ambil data UMKM dan relasi 'user' untuk menampilkan data pemilik
+        // Menggunakan paginate() agar sesuai dengan format yang diharapkan Fronten
+
+        
+        $totalUmkm = Umkm::where('umkm_status', 'active')->count();
+        
+        $verifiedUmkm = Umkm::where('verification_status', 'verified')
+            ->where('verification_status', 'verified')
+            ->count();
+            
+        $suspendedUmkm = Umkm::whereIn('umkm_status', ['suspended', 'banned'])
+            ->count();
+            
+        $umkm = Umkm::with('user')->paginate(10);
+
+        // 2. Siapkan data statistik
+        $stats = [
+            'total_umkm' => $totalUmkm,
+            'verified_umkm' => $verifiedUmkm,
+            'suspended_umkm' => $suspendedUmkm ,
+        ];
+
+        // 3. Kembalikan respons JSON
+        return response()->json([
+            'success' => true,
+            'stats' => $stats,
+            'data_umkm' => $umkm
+        ], 200);
+    }
+
+
     public function store(Request $request)
     {
         // 1. Validasi Input
@@ -238,4 +267,63 @@ class UmkmController extends Controller
             'message' => 'Foto berhasil dihapus dari galeri.'
         ], 200);
     }
+
+    public function showUmkmDetail($id)
+    {
+        $umkm = Umkm::with('user')->find($id);
+
+        if (!$umkm) {
+            return response()->json(['message' => 'UMKM tidak ditemukan'], 404);
+        }
+
+        // AMBIL SEMUA ulasan untuk menghitung rata-rata rating
+        $semuaUlasan = \App\Models\Comment::where('umkm_id', $umkm->user_id)->get();
+        $totalUlasan = $semuaUlasan->count();
+        
+        // Hitung rata-rata rating (dibulatkan 1 angka di belakang koma)
+        $rataRataRating = $totalUlasan > 0 ? round($semuaUlasan->avg('rating'), 1) : 0;
+
+        // Ambil 10 ulasan terbaru untuk ditampilkan di tabel/grid
+        $ulasanUmkm = \App\Models\Comment::with('user')
+            ->where('umkm_id', $umkm->user_id)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $laporanUmkm = \App\Models\Report::where('reported_user_id', $umkm->user_id)->latest()->get();
+        $totalLaporan = $laporanUmkm->count();
+        $laporanTerbaru = $laporanUmkm->first();
+
+        return response()->json([
+            'message' => 'Detail UMKM berhasil diambil',
+            'data' => [
+                'profil_umkm' => [
+                    'id'                 => $umkm->_id,
+                    'nama_usaha'         => $umkm->nama_usaha,
+                    'deskripsi'          => $umkm->deskripsi,
+                    'lokasi'             => $umkm->lokasi,
+                    'media_sosial'       => $umkm->media_sosial,
+                    'is_open'            => $umkm->is_open,
+                    'jadwal_operasional' => $umkm->jadwal_operasional,
+                    'katalog_galeri'     => $umkm->katalog_galeri,
+                    'created_at'         => $umkm->created_at,
+                    'rating_avg'         => $rataRataRating, // DATA BARU
+                    'total_ulasan'       => $totalUlasan,    // DATA BARU
+                ],
+                'pemilik' => $umkm->user ? [
+                    'id'             => $umkm->user->_id,
+                    'username'       => $umkm->user->username,
+                    'email'          => $umkm->user->email,
+                    'country'        => $umkm->user->country,
+                    'foto_profil'    => $umkm->user->foto_profil,
+                    'account_status' => $umkm->user->account_status ?? 'active',
+                ] : null,
+                'keamanan' => [
+                    'total_laporan'         => $totalLaporan,
+                    'pesan_laporan_terbaru' => $laporanTerbaru ? $laporanTerbaru->report_message : null,
+                ],
+                'ulasan' => $ulasanUmkm
+            ]
+        ]);
+    }   
 }

@@ -190,10 +190,10 @@ class AccountController extends Controller
         ]);
     }
 
-    public function showUserDetail($id)
+    public function showUmkmDetail($id)
     {
         // 1. Cari data user berdasarkan ID
-        $user = \App\Models\Account::find($id);
+        $user = Account::find($id);
 
         if (!$user) {
             return response()->json(['message' => 'User tidak ditemukan'], 404);
@@ -230,6 +230,58 @@ class AccountController extends Controller
                 ],
                 'keamanan' => [
                     'total_laporan' => $totalLaporan,
+                    'pesan_laporan_terbaru' => $laporanTerbaru ? $laporanTerbaru->report_message : null,
+                ],
+                'komentar' => $riwayatKomentar
+            ]
+        ]);
+    }
+
+    public function showUserDetail($id)
+    {
+        // 1. Cari data user berdasarkan ID
+        $user = \App\Models\Account::find($id);
+
+        if (!$user) {
+            return response()->json(['message' => 'User tidak ditemukan'], 404);
+        }
+
+        // 2. Ambil Riwayat Komentar (Maksimal 10 terbaru) beserta data UMKM-nya
+        $riwayatKomentar = \App\Models\Comment::with('umkm')
+            ->where('user_id', $id)
+            ->latest()
+            ->take(10)
+            ->get();
+            
+        // Hitung total seluruh komentar yang pernah dibuat user ini (untuk Card Statistik)
+        $totalKomentar = \App\Models\Comment::where('user_id', $id)->count();
+
+        // 3. Ambil Data Laporan (Berapa kali user ini dilaporkan)
+        $laporanUser = \App\Models\Report::where('reported_user_id', $id)->latest()->get();
+        
+        $totalLaporan = $laporanUser->count();
+        $laporanTerbaru = $laporanUser->first(); 
+
+        // 4. Susun Semua Data Menjadi Satu Paket JSON
+        return response()->json([
+            'message' => 'Detail user berhasil diambil',
+            'data' => [
+                'profil' => [
+                    'id'             => $user->_id,
+                    'username'       => $user->username,
+                    'email'          => $user->email,
+                    'foto_profil'    => $user->foto_profil ?? 'default-profile.png',
+                    'role'           => $user->role,
+                    'account_status' => $user->account_status ?? 'active',
+                    'created_at'     => $user->created_at,
+                ],
+                // TAMBAHAN: Untuk mempermudah Frontend mengisi angka di Card atas
+                'statistik' => [
+                    'total_komentar'   => $totalKomentar,
+                    'total_dilaporkan' => $totalLaporan
+                ],
+                'keamanan' => [
+                    'total_laporan'         => $totalLaporan,
                     'pesan_laporan_terbaru' => $laporanTerbaru ? $laporanTerbaru->report_message : null,
                 ],
                 'komentar' => $riwayatKomentar

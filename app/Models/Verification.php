@@ -22,6 +22,6 @@ class Verification extends Model
     // JEMBATAN RELASI: Menyambungkan id_umkm ke tabel Account
     public function umkm()
     {
-        return $this->belongsTo(Account::class, 'id_umkm', '_id');
+        return $this->belongsTo(Umkm::class, 'id_umkm', '_id');
     }
 }

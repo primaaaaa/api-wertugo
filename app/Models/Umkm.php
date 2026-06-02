@@ -19,12 +19,14 @@ class Umkm extends Model
         'media_sosial',       
         'is_open',            
         'jadwal_operasional', 
-        'katalog_galeri'      
+        'katalog_galeri',
+        'verification_status',
+        'umkm_status'      
     ];
 
     // Relasi balik ke model User
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Account::class, 'user_id', '_id');
     }
 }

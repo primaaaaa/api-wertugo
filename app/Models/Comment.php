@@ -13,6 +13,7 @@ class Comment extends Model
         'user_id',   // ID user pembeli/pengunjung yang berkomentar
         'umkm_id',   // ID UMKM yang dikomentari
         'content',   // Isi komentarnya
+        'rating',
         'status'     // 'active' atau 'hidden' (dipakai saat kena report)
     ];
 

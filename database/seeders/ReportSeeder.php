@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Account;
+use App\Models\Umkm;
 use App\Models\Comment;
 use App\Models\Report;
 use Faker\Factory as Faker;
@@ -14,68 +15,73 @@ class ReportSeeder extends Seeder
     {
         $faker = Faker::create('id_ID');
 
-        // Ambil data dari database
-        $umkms = Account::where('role', 'umkm')->get();
+        // Ambil data pendukung dari database
         $users = Account::where('role', 'user')->get();
+        $umkms = Umkm::all();
         $comments = Comment::all();
 
-        // Validasi ketersediaan data
-        if ($umkms->isEmpty() || $users->isEmpty()) {
-            $this->command->error('Data User atau UMKM kosong! Jalankan seeder akun terlebih dahulu.');
+        // Validasi ketersediaan data dasar
+        if ($users->isEmpty() || $umkms->isEmpty()) {
+            $this->command->error('Data User atau UMKM kosong! Pastikan sudah menjalankan AccountSeeder dan UmkmSeeder.');
             return;
         }
 
-        if ($comments->isEmpty()) {
-            $this->command->error('Data Komentar kosong! Silakan jalankan CommentSeeder terlebih dahulu.');
-            return;
-        }
-
-        // Hapus data laporan lama (opsional, agar datanya fresh tidak menumpuk)
+        // Hapus data laporan lama agar tidak menumpuk
         Report::truncate(); 
 
-        $kategoriPelanggaran = ['Ujaran Kebencian', 'Penipuan', 'Ketidaknyamanan', 'Pelecehan'];
+        $kategoriPelanggaran = ['Ujaran Kebencian', 'Penipuan', 'Ketidaknyamanan', 'Pelecehan', 'Spam'];
+        $jumlahData = 0;
 
-        // Buat 20 data laporan
+        // Kita buat 20 data laporan
         for ($i = 0; $i < 20; $i++) {
-            $kategori = $faker->randomElement($kategoriPelanggaran);
-            $tipeReport = $faker->randomElement(['umkm', 'comment']);
             
-            $pelapor = $users->random(); // Yang melaporkan selalu user (bisa diubah sesuai kebutuhan)
+            // Tentukan tipe laporan: jika tidak ada data komentar di DB, paksa jadi laporan UMKM
+            $tipeReport = ($comments->isNotEmpty() && $faker->boolean(50)) ? 'comment' : 'umkm';
+            
+            $pelapor = $users->random(); // Laporan selalu datang dari User biasa
             
             $terlaporId = null;
             $commentId = null;
             $pesanAduan = '';
+            $kategori = $faker->randomElement($kategoriPelanggaran);
 
-            // LOGIKA PINTAR: Jika yang dilaporkan adalah Komentar
+            // LOGIKA 1: Laporan terhadap sebuah Komentar
             if ($tipeReport === 'comment') {
                 $komentarBermasalah = $comments->random();
                 
-                $terlaporId = $komentarBermasalah->user_id; // Akun yang menulis komentar
-                $commentId = $komentarBermasalah->_id;      // TITIPAN ID KOMENTAR
-                $pesanAduan = $komentarBermasalah->content; // Jadikan isi komentar sebagai pesan yang dilaporkan
+                $terlaporId = $komentarBermasalah->user_id; // ID Pembuat komentar
+                $commentId = $komentarBermasalah->_id;      // Titipkan ID komentarnya
+                $pesanAduan = "Komentar ini sangat tidak pantas: '" . $komentarBermasalah->content . "'";
             } 
-            // LOGIKA PINTAR: Jika yang dilaporkan adalah UMKM-nya
+            
+            // LOGIKA 2: Laporan terhadap sebuah Toko/UMKM
             else {
-                $terlaporId = $umkms->random()->_id;
-                $commentId = null; // Tidak ada kaitan dengan komentar
-                $pesanAduan = "Toko ini melakukan pelanggaran berat terkait " . strtolower($kategori) . " dan merugikan pelanggan.";
+                $umkmBermasalah = $umkms->random();
+                
+                // PENTING: Kita bidik user_id (ID Pemilik UMKM) agar sinkron dengan relasi di Controller-mu
+                $terlaporId = $umkmBermasalah->user_id; 
+                $commentId = null; 
+                $pesanAduan = "Toko " . $umkmBermasalah->nama_usaha . " melakukan pelanggaran terkait " . strtolower($kategori) . " kepada pelanggan.";
             }
 
+            // Simpan ke MongoDB
             Report::create([
                 'reporter_id'      => $pelapor->_id,
                 'reported_user_id' => $terlaporId,
-                'comment_id'       => $commentId, // Tersimpan rapi di database
+                'comment_id'       => $commentId,
                 'report_type'      => $tipeReport,
                 'report_category'  => $kategori,
                 'report_message'   => $pesanAduan,
-                // Perbanyak pending agar antrean UI terlihat ramai
+                // Rasio: Lebih banyak 'pending' agar UI Admin terlihat ada antrean
                 'report_status'    => $faker->randomElement(['pending', 'pending', 'pending', 'finished']),
                 'internal_note'    => null,
-                'created_at'       => $faker->dateTimeBetween('-2 months', 'now'),
+                'created_at'       => $faker->dateTimeBetween('-1 months', 'now'),
                 'updated_at'       => now(),
             ]);
+
+            $jumlahData++;
         }
 
-        $this->command->info('20 Data Laporan (dengan Comment ID) Berhasil Digenerate! 🚨');
+        $this->command->info($jumlahData . ' Data Laporan (Report) Berhasil Digenerate! 🚨');
     }
 }

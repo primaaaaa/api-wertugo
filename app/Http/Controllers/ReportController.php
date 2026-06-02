@@ -4,30 +4,63 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Report;
+use App\Models\Umkm;
+use App\Models\Account;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
     public function index()
     {
-        // 1. Hitung statistik untuk Dashboard/Header (jika butuh)
+        // 1. Hitung statistik untuk Dashboard/Header
         $totalUmkmReport = Report::where('report_type', 'umkm')->count();
         $totalCommentReport = Report::where('report_type', 'comment')->count();
         $totalReportCompleted = Report::where('report_status', 'finished')->count();
 
-        // 2. Ambil data laporan dan BAWA SERTA data Pelapor & Terlapor
-        $reportsTable = Report::with(['pelapor', 'terlapor'])
-                              ->latest()
-                              ->paginate(10);
+        // 2. Ambil data laporan
+        // Kita HANYA memanggil relasi 'pelapor' di tingkat database.
+        // Untuk 'terlapor', kita akan suntikkan secara manual di bawah karena bisa berupa UMKM atau User biasa.
+        $reports = Report::with('pelapor')->latest()->paginate(10);
 
-        // 3. Kembalikan JSON dengan rapi dan variabel yang benar
+        // 3. Modifikasi data (Suntik Terlapor & Komentar)
+        $reports->getCollection()->transform(function ($report) {
+            
+            // Jika yang dilaporkan adalah Komentar
+            if ($report->report_type === 'comment' && $report->comment_id) {
+                $komentar = Comment::find($report->comment_id);
+                $penulis = $komentar ? Account::find($komentar->user_id) : null;
+                
+                $report->terlapor = $penulis;
+                // Timpa pesan laporan dengan isi komentar yang asli agar akurat
+                $report->report_message = $komentar ? $komentar->content : 'Komentar telah dihapus.';
+            } 
+            
+            // Jika yang dilaporkan adalah UMKM
+            elseif ($report->report_type === 'umkm') {
+                // reported_user_id di sini adalah ID Pemilik UMKM
+                // Kita ambil data UMKM-nya beserta user pemiliknya
+                $umkm = Umkm::with('user')->where('user_id', $report->reported_user_id)->first();
+                
+                // Gunakan data 'user' dari UMKM tersebut sebagai pihak terlapor
+                $report->terlapor = $umkm ? $umkm->user : null;
+                
+                // Tambahkan nama toko ke pesan agar lebih informatif
+                if ($umkm && empty($report->report_message)) {
+                    $report->report_message = "Melaporkan toko: " . $umkm->nama_usaha;
+                }
+            }
+            
+            return $report;
+        });
+
+        // 4. Kembalikan JSON
         return response()->json([
             'stats' => [
                 'total_umkm_report' => $totalUmkmReport,
                 'total_comment_report' => $totalCommentReport,
                 'total_report_completed' => $totalReportCompleted,
             ],
-            'data_reports' => $reportsTable // Kirim ke FE untuk Tabel
+            'data_reports' => $reports 
         ]);
     }
 
@@ -42,11 +75,11 @@ class ReportController extends Controller
         $aksiKomentar = $request->input('aksi_komentar');
         $statusAkun = $request->input('status_akun');
         $catatanInternal = $request->input('catatan_internal');
-        $commentId = $request->input('comment_id'); // Tangkap ID komentarnya
+        $commentId = $request->input('comment_id'); 
 
         // 1. Eksekusi Status Akun (Suspend/Aktif)
         if ($statusAkun === 'suspend') {
-            $pelanggar = \App\Models\Account::find($report->reported_user_id);
+            $pelanggar = Account::find($report->reported_user_id);
             if ($pelanggar) {
                 $pelanggar->account_status = 'suspended';
                 $pelanggar->save();
@@ -57,7 +90,7 @@ class ReportController extends Controller
         if ($aksiKomentar === 'hapus' && !empty($commentId)) {
             $komentar = Comment::find($commentId);
             if ($komentar) {
-                $komentar->status = 'hidden'; // Atau 'deleted' sesuai strategimu
+                $komentar->status = 'hidden'; 
                 $komentar->save();
             }
         }

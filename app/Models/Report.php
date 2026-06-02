@@ -21,11 +21,11 @@ class Report extends Model
     ];
 
     // JEMBATAN 1: Untuk mengambil data siapa yang MELAPORKAN
+// Di dalam model Report.php (Backend)
     public function pelapor()
     {
         return $this->belongsTo(Account::class, 'reporter_id', '_id');
     }
-
     // JEMBATAN 2: Untuk mengambil data siapa/UMKM yang DILAPORKAN
     public function terlapor()
     {
