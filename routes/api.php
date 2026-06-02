@@ -22,6 +22,9 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+
+// Rute pamungkas untuk membaca dokumen verifikasi
+Route::get('/view-document', [VerificationController::class, 'serveFile']);
 // Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
 // Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
 // Route::get('/admin/dashboard', [DashboardController::class, 'index']);
@@ -105,7 +108,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reports/{id}/tindak', [ReportController::class, 'tindakLaporan']);
     
     Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
-
+    
 
     // Verifikasi UMKM (Admin Side)
     Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
