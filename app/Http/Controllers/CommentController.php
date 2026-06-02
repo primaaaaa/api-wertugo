@@ -49,4 +49,21 @@ class CommentController extends Controller
             'data' => $comment
         ], 201);
     }
+
+    public function pendingList()
+    {
+        // Gunakan model Verification milikmu
+        // Asumsi relasinya: Verification terhubung ke UMKM, dan UMKM terhubung ke User (Pemilik)
+        $pendings = \App\Models\Verification::with(['umkm', 'umkm.user'])
+            ->where('verification_status', 'pending')
+            ->latest()
+            ->paginate(10); // 10 baris per halaman
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar antrean verifikasi berhasil diambil.',
+            'data' => $pendings,
+            'total_pending' => $pendings->total()
+        ]);
+    }
 }

@@ -22,10 +22,10 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
-Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
-Route::get('/admin/dashboard', [DashboardController::class, 'index']);
-
+// Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
+// Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
+// Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+// Route::get('/verifikasi/pending', [VerificationController::class, 'pendingList']);
 // ==========================================
 // 6.1 MODUL AUTENTIKASI DAN REGISTRASI PENGGUNA
 // ==========================================
@@ -104,14 +104,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports/getallreport', [ReportController::class, 'index']);
     Route::put('/reports/{id}/tindak', [ReportController::class, 'tindakLaporan']);
     
-    // Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
+    Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
 
 
     // Verifikasi UMKM (Admin Side)
-    // Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
-    
+    Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
     Route::put('/umkm/{id}/verify', [VerificationController::class, 'verify']); 
     Route::get('/umkm/{id}', [UmkmController::class, 'showUmkmDetail']);
+    Route::get('/verifikasi/pending', [VerificationController::class, 'pendingList']);
+    Route::get('/admin/verifikasi/{id}', [VerificationController::class, 'showVerificationDetail']);
 
     // Room (Chat / Komunitas)
     Route::post('/room/createroom', [RoomController::class, 'createroom']);
