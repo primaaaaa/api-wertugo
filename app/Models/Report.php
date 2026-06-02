@@ -12,10 +12,12 @@ class Report extends Model
     protected $fillable = [
         'reported_user_id',
         'reporter_id',
+        'comment_id',       // TAMBAHAN BARU: Untuk menyimpan ID komentar yang dilaporkan
         'report_type', 
-        'report_category', // TAMBAHAN: Untuk 'Penipuan', 'Ujaran Kebencian', dll
+        'report_category', 
         'report_message',
-        'report_status'
+        'report_status',
+        'internal_note'
     ];
 
     // JEMBATAN 1: Untuk mengambil data siapa yang MELAPORKAN

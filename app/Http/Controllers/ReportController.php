@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Comment;
 use App\Models\Report;
 use Illuminate\Http\Request;
 
@@ -32,38 +33,42 @@ class ReportController extends Controller
 
     public function tindakLaporan(Request $request, $id)
     {
-        // 1. Cari Laporan berdasarkan ID
         $report = Report::find($id);
 
         if (!$report) {
             return response()->json(['message' => 'Laporan tidak ditemukan'], 404);
         }
 
-        // 2. Eksekusi berdasarkan Tipe Laporan
-        if ($report->report_type === 'umkm') {
-            // Cari akun UMKM-nya
-            $umkm = \App\Models\Account::find($report->reported_user_id);
-            if ($umkm) {
-                $umkm->account_status = 'suspended'; // Ubah status akun
-                $umkm->save();
-            }
-        } 
-        elseif ($report->report_type === 'comment') {
-            // Cari Komentarnya (Pastikan kamu sudah buat Model Comment)
-            // Asumsi: ID komentar tersimpan di reported_user_id
-            $comment = \App\Models\Comment::find($report->reported_user_id);
-            if ($comment) {
-                $comment->status = 'hidden'; // Atau 'suspended' / 'deleted'
-                $comment->save();
+        $aksiKomentar = $request->input('aksi_komentar');
+        $statusAkun = $request->input('status_akun');
+        $catatanInternal = $request->input('catatan_internal');
+        $commentId = $request->input('comment_id'); // Tangkap ID komentarnya
+
+        // 1. Eksekusi Status Akun (Suspend/Aktif)
+        if ($statusAkun === 'suspend') {
+            $pelanggar = \App\Models\Account::find($report->reported_user_id);
+            if ($pelanggar) {
+                $pelanggar->account_status = 'suspended';
+                $pelanggar->save();
             }
         }
 
-        // 3. Ubah status laporan menjadi selesai (finished)
+        // 2. Eksekusi Hapus Komentar
+        if ($aksiKomentar === 'hapus' && !empty($commentId)) {
+            $komentar = Comment::find($commentId);
+            if ($komentar) {
+                $komentar->status = 'hidden'; // Atau 'deleted' sesuai strategimu
+                $komentar->save();
+            }
+        }
+
+        // 3. Tutup Laporan
         $report->report_status = 'finished';
+        $report->internal_note = $catatanInternal;
         $report->save();
 
         return response()->json([
-            'message' => 'Tindakan berhasil! Entitas telah di-suspend dan laporan ditutup.',
+            'message' => 'Tindakan berhasil diterapkan secara menyeluruh!',
             'data' => $report
         ]);
     }
