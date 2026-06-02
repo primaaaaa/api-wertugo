@@ -189,4 +189,51 @@ class AccountController extends Controller
             'message' => 'Logout berhasil'
         ]);
     }
+
+    public function showUserDetail($id)
+    {
+        // 1. Cari data user berdasarkan ID
+        $user = \App\Models\Account::find($id);
+
+        if (!$user) {
+            return response()->json(['message' => 'User tidak ditemukan'], 404);
+        }
+
+        // 2. Ambil Riwayat Komentar (Maksimal 10 terbaru) beserta data UMKM-nya
+        // Pastikan Model Comment sudah punya relasi 'umkm' seperti yang kita bahas sebelumnya
+        $riwayatKomentar = \App\Models\Comment::with('umkm')
+            ->where('user_id', $id)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        // 3. Ambil Data Laporan (Berapa kali user ini dilaporkan)
+        // Kalau dia user biasa, mungkin laporannya masuk sebagai 'comment' (berkomentar kasar)
+        $laporanUser = \App\Models\Report::where('reported_user_id', $id)->latest()->get();
+        
+        $totalLaporan = $laporanUser->count();
+        $laporanTerbaru = $laporanUser->first(); // Mengambil 1 laporan paling baru untuk ditampilkan di kotak merah
+
+        // 4. Susun Semua Data Menjadi Satu Paket JSON
+        return response()->json([
+            'message' => 'Detail user berhasil diambil',
+            'data' => [
+                'profil' => [
+                    'id' => $user->_id,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'foto_profil' => $user->foto_profil ?? 'default-profile.png',
+                    'role' => $user->role,
+                    'account_status' => $user->account_status ?? 'active',
+                    'created_at' => $user->created_at,
+                    // 'total_trip' => ... (Opsional: Nanti diisi kalau kamu sudah punya tabel Trip/Plan)
+                ],
+                'keamanan' => [
+                    'total_laporan' => $totalLaporan,
+                    'pesan_laporan_terbaru' => $laporanTerbaru ? $laporanTerbaru->report_message : null,
+                ],
+                'komentar' => $riwayatKomentar
+            ]
+        ]);
+    }
 }

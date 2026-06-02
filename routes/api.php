@@ -20,9 +20,6 @@ Route::post('/register', [AccountController::class, 'store']);
 Route::post('/login', [AccountController::class, 'login']);
 
 // Untuk tahap development, nanti dipindahin lagi ke dalam middleware
-
-Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AccountController::class, 'logout']);
     Route::get('/profile', [AccountController::class, 'getProfile']);
@@ -30,7 +27,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
     Route::get('/admin/dashboard', [DashboardController::class, 'index']);
     Route::get('/reports/getallreport', [ReportController::class, 'index']);
-
+    Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
+    
+    // User
+    Route::get('/admin/users/{id}', [AccountController::class, 'showUserDetail']);
 
     // Report Notice
     Route::put('/reports/{id}/tindak', [ReportController::class, 'tindakLaporan']);
@@ -42,7 +42,6 @@ Route::middleware('auth:sanctum')->group(function () {
     //verifikasi Umkm
     // Route::get
     Route::get('/umkm/getumkm', [AccountController::class, 'getAllUmkm']);
-    
     Route::put('/umkm/{id}/verify', [VerificationController::class, 'verify']); 
 
     // Room
