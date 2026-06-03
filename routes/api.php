@@ -23,12 +23,12 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-
+Route::get('/admin/dashboard', [DashboardController::class, 'index']);
 // Rute pamungkas untuk membaca dokumen verifikasi
 Route::get('/view-document', [VerificationController::class, 'serveFile']);
 // Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
 // Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
-Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+
 // Route::get('/verifikasi/pending', [VerificationController::class, 'pendingList']);
 // ==========================================
 // 6.1 MODUL AUTENTIKASI DAN REGISTRASI PENGGUNA

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+// namespace App\Models;
 
+use MongoDB\Laravel\Eloquent\Model; // PASTIKAN PAKAI INI, BUKAN MODEL BIASA
 use Illuminate\Support\Facades\Storage;
 use MongoDB\Laravel\Auth\User as Authenticatable; // Gunakan ini untuk autentikasi
 use Illuminate\Notifications\Notifiable;
