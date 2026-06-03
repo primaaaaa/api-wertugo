@@ -89,34 +89,35 @@ class VerificationController extends Controller
 
         // Susun daftar dokumen (Sesuaikan key 'file' dengan field di database-mu)
         // Kita buat format seragam agar mudah di-looping di Frontend
+        // Susun daftar dokumen (Sesuaikan dengan field di method uploadDocuments)
         $dokumen = [
             [
                 'nama' => 'Nomor Induk Berusaha (NIB)',
-                'file' => $verification->dokumen_nib ?? null,
+                'file' => $verification->nib_dokumen ?? null,
                 'is_required' => true,
-                'tipe_aksi' => 'view' // view (mata) atau download
+                'tipe_aksi' => 'view'
             ],
             [
                 'nama' => 'Nomor Pokok Wajib Pajak (NPWP)',
-                'file' => $verification->dokumen_npwp ?? null,
+                'file' => $verification->npwp_dokumen ?? null,
                 'is_required' => true,
                 'tipe_aksi' => 'view'
             ],
             [
                 'nama' => 'Dokumen Legalitas Bangunan',
-                'file' => $verification->dokumen_legalitas ?? null,
+                'file' => $verification->legalitas_bangunan_dokumen ?? null,
                 'is_required' => true,
                 'tipe_aksi' => 'download'
             ],
             [
                 'nama' => 'Sertifikat Halal',
-                'file' => $verification->dokumen_halal ?? null,
+                'file' => $verification->sertifikat_halal_dokumen ?? null,
                 'is_required' => false,
                 'tipe_aksi' => 'view'
             ],
             [
                 'nama' => 'Sertifikat Usaha Pariwisata',
-                'file' => $verification->dokumen_pariwisata ?? null,
+                'file' => $verification->sertifikat_usaha_pariwisata_dokumen ?? null,
                 'is_required' => false,
                 'tipe_aksi' => 'view'
             ]
@@ -164,7 +165,7 @@ class VerificationController extends Controller
 
         // 2. Cari UMKM milik user yang login
         $user = $request->user();
-        $umkm = \App\Models\Umkm::where('user_id', $user->id)->first();
+        $umkm = Umkm::where('user_id', $user->id)->first();
 
         if (!$umkm) {
             return response()->json([
@@ -222,5 +223,45 @@ class VerificationController extends Controller
             'success' => true,
             'verification_status' => $status
         ]);
+    }
+
+    public function serveFile(Request $request)
+    {
+        $path = $request->query('file'); 
+
+        if (!$path) {
+            return response()->json(['message' => 'Parameter file kosong.'], 400);
+        }
+
+        // 1. Pecah path untuk mengambil direktori dan nama aslinya SAJA (tanpa ekstensi .jpg)
+        $direktori = dirname($path); // Contoh: 'verification_docs'
+        $namaKunci = pathinfo($path, PATHINFO_FILENAME); // Contoh: '6QH1kFbkGKkE23NVgtXjq7kijIGg6BugHpOCD4Ee'
+
+        // 2. Lokasi folder public/storage milik Laragon
+        $folderPublicStorage = public_path('storage' . DIRECTORY_SEPARATOR . $direktori);
+        
+        // 3. GUNAKAN GLOB: Cari file apapun yang nama depannya sama, masa bodoh dengan ekstensinya!
+        $pencarianPublic = glob($folderPublicStorage . DIRECTORY_SEPARATOR . $namaKunci . '.*');
+        
+        if (!empty($pencarianPublic)) {
+            // Ambil file pertama yang ditemukan dan langsung download!
+            return response()->download($pencarianPublic[0]);
+        }
+
+        // 4. Lakukan hal yang sama untuk lokasi asli bawaan Laravel (storage/app/public/...)
+        $folderStorageAsli = storage_path('app' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . $direktori);
+        $pencarianAsli = glob($folderStorageAsli . DIRECTORY_SEPARATOR . $namaKunci . '.*');
+        
+        if (!empty($pencarianAsli)) {
+            return response()->download($pencarianAsli[0]);
+        }
+
+        // 5. Kalau sampai sini masih gagal, ini benar-benar misteri alam semesta.
+        return response()->json([
+            'message' => 'Dokumen fisik tetap tidak ditemukan meski ekstensinya sudah diabaikan.',
+            'nama_kunci_yg_dicari' => $namaKunci,
+            'lokasi_pencarian_1' => $folderPublicStorage,
+            'lokasi_pencarian_2' => $folderStorageAsli,
+        ], 404);
     }
 }
