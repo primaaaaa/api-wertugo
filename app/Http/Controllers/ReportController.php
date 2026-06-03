@@ -105,4 +105,35 @@ class ReportController extends Controller
             'data' => $report
         ]);
     }
+
+    // Fungsi untuk User mengirimkan laporan komentar
+    public function store(Request $request)
+    {
+        // Tambahkan log untuk melihat apa yang sebenarnya sampai ke server
+        \Log::info('Data Laporan Masuk:', $request->all());
+
+        $request->validate([
+            'reported_user_id' => 'required',
+            'comment_id'       => 'required',
+            'report_category'  => 'required',
+            'report_message'   => 'required'
+        ]);
+
+        try {
+            $report = new Report();
+            $report->reporter_id = $request->user()->id;
+            $report->reported_user_id = $request->reported_user_id;
+            $report->comment_id = $request->comment_id;
+            $report->report_type = 'comment';
+            $report->report_category = $request->report_category;
+            $report->report_message = $request->report_message;
+            $report->report_status = 'pending'; // Pastikan field ini ada di tabel & fillable
+            $report->save();
+
+            return response()->json(['success' => true, 'message' => 'Laporan terkirim!'], 201);
+        } catch (\Exception $e) {
+            \Log::error('Gagal Simpan Laporan: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Gagal simpan ke database: ' . $e->getMessage()], 500);
+        }
+    }
 }

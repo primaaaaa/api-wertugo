@@ -24,28 +24,32 @@ class CommentController extends Controller
     }
 
     // Fungsi untuk User menambahkan komentar baru
-    public function store(Request $request)
+    // Fungsi untuk User menambahkan komentar & rating baru
+    public function store(Request $request, $id) 
     {
-        // Validasi input dari Frontend
+        // 1. Pastikan User terdeteksi (Tambahkan cek ini)
+        if (!$request->user()) {
+            return response()->json(['message' => 'Unauthorized: Token tidak valid atau tidak ditemukan'], 401);
+        }
+
         $request->validate([
-            'user_id' => 'required|string',
-            'umkm_id' => 'required|string',
             'content' => 'required|string|max:500',
+            'rating'  => 'required|numeric|min:1|max:5',
         ]);
 
-        // Simpan ke MongoDB
+        // 2. Simpan dengan aman
         $comment = Comment::create([
-            'user_id' => $request->user_id,
-            'umkm_id' => $request->umkm_id,
+            'user_id' => $request->user()->id, 
+            'umkm_id' => $id, 
             'content' => $request->input('content'),
-            'status'  => 'active' // Default saat pertama kali dibuat
+            'rating'  => $request->input('rating'),
+            'status'  => 'active' 
         ]);
 
-        // Opsional: Load data user agar Frontend langsung bisa menampilkan nama dan fotonya
         $comment->load('user');
 
         return response()->json([
-            'message' => 'Komentar berhasil ditambahkan',
+            'message' => 'Komentar dan rating berhasil ditambahkan',
             'data' => $comment
         ], 201);
     }

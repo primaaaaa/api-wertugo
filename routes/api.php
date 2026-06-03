@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\BerandaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoomController;
@@ -22,9 +23,11 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// Route::get('/beranda', [BerandaController::class, 'index']);
+
 // Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);
 // Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
-// Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+Route::get('/admin/dashboard', [DashboardController::class, 'index']);
 // Route::get('/verifikasi/pending', [VerificationController::class, 'pendingList']);
 // ==========================================
 // 6.1 MODUL AUTENTIKASI DAN REGISTRASI PENGGUNA
@@ -37,6 +40,18 @@ Route::post('/login', [AccountController::class, 'login']);
 // ==========================================
 Route::middleware('auth:sanctum')->group(function () {
     
+    // ==========================================
+    // DATA BERANDA USER 
+    // ==========================================
+    Route::get('/beranda', [BerandaController::class, 'index']);
+    Route::get('/beranda/{id}', [BerandaController::class, 'showDetail']); // TAMBAHKAN INI
+    Route::get('/beranda', [BerandaController::class, 'index']);
+
+
+    Route::post('/reports', [ReportController::class, 'store']);
+
+
+
     // Autentikasi Lanjutan
     Route::post('/logout', [AccountController::class, 'logout']);
     Route::get('/profile', [AccountController::class, 'getProfile']);
