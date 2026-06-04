@@ -70,4 +70,29 @@ class CommentController extends Controller
             'total_pending' => $pendings->total()
         ]);
     }
+
+    public function reply(Request $request, $id)
+    {
+        if (!$request->user()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'reply' => 'required|string|max:1000'
+        ]);
+
+        $comment = Comment::find($id);
+        if (!$comment) {
+            return response()->json(['message' => 'Komentar tidak ditemukan'], 404);
+        }
+
+        $comment->reply = $request->input('reply');
+        $comment->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Balasan berhasil dikirim',
+            'data' => $comment
+        ], 200);
+    }
 }

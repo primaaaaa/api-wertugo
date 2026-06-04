@@ -49,8 +49,12 @@ class RatingController extends Controller
         $average = $ratings->avg('score');
         $totalRatings = $ratings->count();
 
-        // 3. Tarik data komentar tekstual dari tabel komentar (Asumsi field-nya place_id)
-        $comments = Comment::where('place_id', $id)->get();
+        // 3. Tarik data komentar tekstual dari tabel komentar (Asumsi field-nya place_id tapi di DB diset ke umkm_id)
+        $comments = Comment::with('user')
+            ->where('umkm_id', $id)
+            ->where('status', 'active')
+            ->latest()
+            ->get();
 
         return response()->json([
             'success' => true,

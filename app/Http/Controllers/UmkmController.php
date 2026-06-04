@@ -3,19 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Umkm;
-use App\Models\Gallery; // Ditambahkan
+use App\Models\Gallery; // Tetap dibiarkan jika digunakan di tempat lain
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage; // Ditambahkan
+use Illuminate\Support\Facades\Storage;
 
 class UmkmController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Ambil data UMKM dan relasi 'user' untuk menampilkan data pemilik
-        // Menggunakan paginate() agar sesuai dengan format yang diharapkan Fronten
-
-        
         $totalUmkm = Umkm::where('umkm_status', 'active')->count();
         
         $verifiedUmkm = Umkm::where('verification_status', 'verified')
@@ -27,14 +23,12 @@ class UmkmController extends Controller
             
         $umkm = Umkm::with('user')->paginate(10);
 
-        // 2. Siapkan data statistik
         $stats = [
             'total_umkm' => $totalUmkm,
             'verified_umkm' => $verifiedUmkm,
             'suspended_umkm' => $suspendedUmkm ,
         ];
 
-        // 3. Kembalikan respons JSON
         return response()->json([
             'success' => true,
             'stats' => $stats,
@@ -42,10 +36,8 @@ class UmkmController extends Controller
         ], 200);
     }
 
-
     public function store(Request $request)
     {
-        // 1. Validasi Input
         $validator = Validator::make($request->all(), [
             'nama_usaha' => 'required|string|max:255',
             'deskripsi'  => 'required|string',
@@ -59,7 +51,6 @@ class UmkmController extends Controller
             ], 422);
         }
 
-        // 2. Cek Aturan Bisnis: Maksimal 1 tempat usaha per akun
         $existingUmkm = Umkm::where('user_id', $request->user()->id)->first();
         if ($existingUmkm) {
             return response()->json([
@@ -68,19 +59,18 @@ class UmkmController extends Controller
             ], 403);
         }
 
-        // 3. Simpan ke Database MongoDB
         $umkm = Umkm::create([
             'user_id'            => $request->user()->id,
             'nama_usaha'         => $request->nama_usaha,
             'deskripsi'          => $request->deskripsi,
             'lokasi'             => $request->lokasi,
             'media_sosial'       => $request->media_sosial ?? [],
-            'is_open'            => false, // Default tutup saat baru didaftarkan
+            'is_open'            => false, 
             'jadwal_operasional' => $request->jadwal_operasional ?? [],
-            'katalog_galeri'     => []
+            'katalog_galeri'     => [],
+            'gambar'             => null // Disiapkan untuk thumbnail
         ]);
 
-        // 4. Berikan Respons Sukses
         return response()->json([
             'success' => true,
             'message' => 'Tempat usaha berhasil didaftarkan.',
@@ -88,13 +78,9 @@ class UmkmController extends Controller
         ], 201);
     }
 
-    /**
-     * GET: /api/umkm/place
-     * Mengambil data tempat usaha milik akun pengusaha yang sedang login
-     */
     public function showActive(Request $request)
     {
-        $umkm = Umkm::where('user_id', $request->user()->id)->first();
+        $umkm = Umkm::with('user')->where('user_id', $request->user()->id)->first();
 
         if (!$umkm) {
             return response()->json([
@@ -103,16 +89,46 @@ class UmkmController extends Controller
             ], 404);
         }
 
+        // 1. HITUNG RATING & ULASAN UNTUK DITAMPILKAN DI DASHBOARD
+        $semuaUlasan = \App\Models\Comment::where('umkm_id', $umkm->_id)->get();
+        $totalUlasan = $semuaUlasan->count();
+        $rataRataRating = $totalUlasan > 0 ? round($semuaUlasan->avg('rating'), 1) : 0;
+
+        // 1.5 HITUNG TOTAL WISHLIST (BERAPA KALI TEMPAT INI DISIMPAN KE BUCKETLIST)
+        $totalWishlist = \App\Models\BucketlistPlace::where('place_id', $umkm->_id)->count();
+
+        // 2. FORMAT ULANG JSON (PASTIKAN TIDAK ADA YANG KETINGGALAN LAGI!)
         return response()->json([
             'success' => true,
-            'data'    => $umkm
+            'data'    => [
+                'id'                  => $umkm->_id ?? $umkm->id,
+                'user_id'             => $umkm->user_id,
+                'nama_usaha'          => $umkm->nama_usaha,
+                'deskripsi'           => $umkm->deskripsi,
+                'lokasi'              => $umkm->lokasi,
+                'media_sosial'        => $umkm->media_sosial ?? [],
+                'is_open'             => $umkm->is_open,
+                'jadwal_operasional'  => $umkm->jadwal_operasional ?? [],
+                
+                // Data Galeri
+                'katalog_galeri'      => $umkm->katalog_galeri ?? [], 
+                'gambar'              => $umkm->gambar ?? null,       
+                
+                // Data Pemilik
+                'foto_profil'         => $umkm->user ? $umkm->user->foto_profil : null,
+
+                // Data Status (INI BIANG KEROKNYA KEMARIN HILANG!)
+                'verification_status' => $umkm->verification_status ?? 'unverified', 
+                'umkm_status'         => $umkm->umkm_status ?? 'active',
+                
+                // Data Statistik
+                'rating_avg'          => $rataRataRating,             
+                'total_ulasan'        => $totalUlasan,                
+                'wishlist_count'      => $totalWishlist
+            ]
         ], 200);
     }
 
-    /**
-     * PUT: /api/umkm/place/status
-     * Mengubah status operasional (is_open: true/false)
-     */
     public function updateStatus(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -138,10 +154,6 @@ class UmkmController extends Controller
         ], 200);
     }
 
-    /**
-     * PUT: /api/umkm/place/schedule
-     * Mengatur atau mengubah jadwal jam buka/tutup operasional
-     */
     public function updateSchedule(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -167,10 +179,6 @@ class UmkmController extends Controller
         ], 200);
     }
 
-    /**
-     * PUT: /api/umkm/place
-     * Memperbarui informasi detail tempat usaha
-     */
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -189,7 +197,6 @@ class UmkmController extends Controller
             return response()->json(['success' => false, 'message' => 'Tempat usaha tidak ditemukan.'], 404);
         }
 
-        // Update hanya kolom yang dikirim di request
         $umkm->update($request->only(['nama_usaha', 'deskripsi', 'lokasi', 'media_sosial']));
 
         return response()->json([
@@ -201,12 +208,14 @@ class UmkmController extends Controller
 
     /**
      * POST: /api/umkm/place/gallery
-     * Mengunggah foto baru ke dalam galeri/katalog
+     * Mengunggah Thumbnail (gambar utama) dan Banner (katalog_galeri array)
      */
     public function uploadGallery(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+            'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg|max:5126',
+            'banners'     => 'nullable|array',
+            'banners.*'   => 'image|mimes:jpeg,png,jpg|max:5126' // Validasi setiap isi array banners
         ]);
 
         if ($validator->fails()) {
@@ -218,49 +227,73 @@ class UmkmController extends Controller
             return response()->json(['success' => false, 'message' => 'Tempat usaha tidak ditemukan.'], 404);
         }
 
-        if ($request->hasFile('image')) {
-            // Simpan file ke folder storage/app/public/galleries
-            $path = $request->file('image')->store('galleries', 'public');
-            
-            // Simpan ke database menggunakan Model Gallery yang sudah di-import
-            $gallery = Gallery::create([
-                'umkm_id'    => $umkm->id, // Gunakan ->id agar otomatis jadi string
-                'image_path' => $path
-            ]);
+        $hasUpdate = false;
 
+        // 1. Simpan Thumbnail ke kolom 'gambar'
+        if ($request->hasFile('thumbnail')) {
+            // Hapus thumbnail lama dari storage jika ada
+            if (!empty($umkm->gambar) && Storage::disk('public')->exists($umkm->gambar)) {
+                Storage::disk('public')->delete($umkm->gambar);
+            }
+
+            $thumbPath = $request->file('thumbnail')->store('galleries/thumbnails', 'public');
+            $umkm->gambar = $thumbPath;
+            $hasUpdate = true;
+        }
+
+        // 2. Simpan banyak Banner ke dalam array 'katalog_galeri'
+        if ($request->hasFile('banners')) {
+            // Ambil data array katalog lama (jika sudah ada isinya), atau buat array kosong
+            $katalogList = $umkm->katalog_galeri ?? [];
+
+            foreach ($request->file('banners') as $banner) {
+                $bannerPath = $banner->store('galleries/banners', 'public');
+                $katalogList[] = $bannerPath;
+            }
+
+            $umkm->katalog_galeri = $katalogList;
+            $hasUpdate = true;
+        }
+
+        if ($hasUpdate) {
+            $umkm->save();
             return response()->json([
                 'success' => true,
-                'message' => 'Foto berhasil diunggah ke katalog.',
-                'data'    => $gallery
-            ], 201);
+                'message' => 'Galeri berhasil diperbarui.',
+                'data'    => [
+                    'gambar' => $umkm->gambar,
+                    'katalog_galeri' => $umkm->katalog_galeri
+                ]
+            ], 200);
         }
 
-        return response()->json(['success' => false, 'message' => 'Gagal mengunggah foto.'], 400);
+        return response()->json(['success' => false, 'message' => 'Tidak ada file yang diunggah.'], 400);
     }
 
-    /**
-     * DELETE: /api/umkm/place/gallery/{id}
-     * Menghapus item foto tertentu dari galeri
-     */
     public function deleteGallery(Request $request, $id)
     {
-        $gallery = Gallery::find($id); // Diubah jadi lebih rapi
-
-        if (!$gallery) {
-            return response()->json(['success' => false, 'message' => 'Foto tidak ditemukan.'], 404);
-        }
-
-        // Pastikan foto yang dihapus benar-benar milik UMKM si user yang login
         $umkm = Umkm::where('user_id', $request->user()->id)->first();
-        if (!$umkm || $gallery->umkm_id !== $umkm->id) { // Diubah menggunakan $umkm->id
+        if (!$umkm) { 
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
-        // Hapus file fisik dari storage (menggunakan Facade Storage)
-        Storage::disk('public')->delete($gallery->image_path);
+        $katalogList = $umkm->katalog_galeri ?? [];
+        $index = (int) $id;
+
+        if (!isset($katalogList[$index])) {
+            return response()->json(['success' => false, 'message' => 'Foto tidak ditemukan.'], 404);
+        }
+
+        $imagePath = $katalogList[$index];
+
+        if (Storage::disk('public')->exists($imagePath)) {
+            Storage::disk('public')->delete($imagePath);
+        }
         
-        // Hapus data dari database
-        $gallery->delete();
+        // Hapus elemen dari array dan reset index
+        unset($katalogList[$index]);
+        $umkm->katalog_galeri = array_values($katalogList);
+        $umkm->save();
 
         return response()->json([
             'success' => true,
@@ -276,14 +309,12 @@ class UmkmController extends Controller
             return response()->json(['message' => 'UMKM tidak ditemukan'], 404);
         }
 
-        // AMBIL SEMUA ulasan untuk menghitung rata-rata rating
-        $semuaUlasan = \App\Models\Comment::where('umkm_id', $umkm->user_id)->get();
+        $semuaUlasan = \App\Models\Comment::where('umkm_id', $umkm->id)->get();
         $totalUlasan = $semuaUlasan->count();
+        $rataRataRating = $totalUlasan > 0 ? round($semuaUlasan->avg('rating'), 1) : 0;
         
-        // Hitung rata-rata rating (dibulatkan 1 angka di belakang koma)
         $rataRataRating = $totalUlasan > 0 ? round($semuaUlasan->avg('rating'), 1) : 0;
 
-        // Ambil 10 ulasan terbaru untuk ditampilkan di tabel/grid
         $ulasanUmkm = \App\Models\Comment::with('user')
             ->where('umkm_id', $umkm->user_id)
             ->latest()
@@ -306,9 +337,10 @@ class UmkmController extends Controller
                     'is_open'            => $umkm->is_open,
                     'jadwal_operasional' => $umkm->jadwal_operasional,
                     'katalog_galeri'     => $umkm->katalog_galeri,
+                    'gambar'             => $umkm->gambar, // Menampilkan thumbnail di detail
                     'created_at'         => $umkm->created_at,
-                    'rating_avg'         => $rataRataRating, // DATA BARU
-                    'total_ulasan'       => $totalUlasan,    // DATA BARU
+                    'rating_avg'         => $rataRataRating, 
+                    'total_ulasan'       => $totalUlasan,    
                 ],
                 'pemilik' => $umkm->user ? [
                     'id'             => $umkm->user->_id,

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model; // Wajib pakai model MongoDB
+use MongoDB\Laravel\Eloquent\Model; 
 
 class Comment extends Model
 {
@@ -16,6 +16,10 @@ class Comment extends Model
         'rating',
         'status'     // 'active' atau 'hidden' (dipakai saat kena report)
     ];
+    
+    protected $casts = [
+        'comments' => 'array', 
+    ];
 
     // Relasi ke tabel Account (Siapa yang nulis komentar)
     public function user()
@@ -23,9 +27,9 @@ class Comment extends Model
         return $this->belongsTo(Account::class, 'user_id', '_id');
     }
 
-    // Relasi ke tabel Account (Di lapak UMKM mana dia komentar)
+    // Relasi ke tabel Umkm (DI PERBAIKI: Mengarah ke Umkm::class)
     public function umkm()
     {
-        return $this->belongsTo(Account::class, 'umkm_id', '_id');
+        return $this->belongsTo(Umkm::class, 'umkm_id', '_id');
     }
 }

@@ -63,8 +63,9 @@ class AccountController extends Controller
             'username' => 'required|string|max:255',
             'password' => 'required|min:8',
             'role' => 'required|in:user,umkm,admin',
-            'country' => 'required|string',
-            'foto_profil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // validasi file
+            'country' => 'nullable|string',
+            'foto_profil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'account_status' => 'required|in:active,inactive' // validasi sudah benar
         ]);
 
         $fotoPath = 'default-profile.png';
@@ -72,7 +73,7 @@ class AccountController extends Controller
             $file = $request->file('foto_profil');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('profile_photos', $filename, 'public');
-            $fotoPath = $path; // simpan path relatif: "profile_photos/nama_file.jpg"
+            $fotoPath = $path; 
         }
 
         $user = Account::create([
@@ -80,8 +81,9 @@ class AccountController extends Controller
             'username' => $validated['username'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
-            'country' => $validated['country'],
+            'country' => $validated['country'] ?? '',
             'foto_profil' => $fotoPath,
+            'account_status' => 'active', // <--- BARIS INI YANG SEBELUMNYA HILANG
         ]);
 
         return response()->json(['message' => 'Berhasil mendaftar', 'data' => $user], 201);

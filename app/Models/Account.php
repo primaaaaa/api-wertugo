@@ -24,11 +24,13 @@ class Account extends Authenticatable // extends Authenticatable, bukan Model
         'password',
         'country',
         'foto_profil',
-        'role'
+        'role',
+        'account_status'
     ];
 
     protected $attributes = [
-        'foto_profil' => 'default-profile.png'
+        'foto_profil' => 'default-profile.png',
+        'account_status' => 'active'
     ];
 
     protected $hidden = [

@@ -21,7 +21,12 @@ class Umkm extends Model
         'jadwal_operasional', 
         'katalog_galeri',
         'verification_status',
-        'umkm_status'      
+        'umkm_status',      
+    ];
+
+    protected $attributes = [
+        'umkm_status' => 'active',
+        'verification_status' => 'unverified'
     ];
 
     // Relasi balik ke model User

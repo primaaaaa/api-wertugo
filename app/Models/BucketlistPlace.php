@@ -12,6 +12,11 @@ class BucketlistPlace extends Model
     protected $fillable = [
         'bucketlist_id', // Relasi ke bucket list
         'place_id',      // Relasi ke tempat wisata/kuliner
-        'personal_rating'// (Opsional) Penilaian personal (1-5)
+        'nama_tempat', 'lokasi', 'deskripsi', 'kategori', 'gambar',
+        'personal_rating', 'comment'// (Opsional) Penilaian personal (1-5)
+    ];
+
+    protected $attribute = [
+        'gambar',
     ];
 }

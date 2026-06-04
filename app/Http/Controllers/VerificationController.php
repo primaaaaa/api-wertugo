@@ -219,9 +219,19 @@ class VerificationController extends Controller
         $verification = Verification::where('id_umkm', $umkm->id)->first();
         $status = $verification ? $verification->verification_status : 'not_submitted';
 
+        $uploadedDocs = [];
+        if ($verification) {
+            if ($verification->nib_dokumen) $uploadedDocs['nib'] = true;
+            if ($verification->npwp_dokumen) $uploadedDocs['npwp'] = true;
+            if ($verification->legalitas_bangunan_dokumen) $uploadedDocs['bangunan'] = true;
+            if ($verification->sertifikat_halal_dokumen) $uploadedDocs['halal'] = true;
+            if ($verification->sertifikat_usaha_pariwisata_dokumen) $uploadedDocs['pariwisata'] = true;
+        }
+
         return response()->json([
             'success' => true,
-            'verification_status' => $status
+            'verification_status' => $status,
+            'uploaded_docs' => $uploadedDocs
         ]);
     }
 

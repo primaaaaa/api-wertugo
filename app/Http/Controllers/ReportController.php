@@ -114,20 +114,24 @@ class ReportController extends Controller
 
         $request->validate([
             'reported_user_id' => 'required',
-            'comment_id'       => 'required',
             'report_category'  => 'required',
-            'report_message'   => 'required'
+            'report_message'   => 'required',
+            'report_type'      => 'required|in:comment,umkm'
         ]);
 
         try {
             $report = new Report();
             $report->reporter_id = $request->user()->id;
             $report->reported_user_id = $request->reported_user_id;
-            $report->comment_id = $request->comment_id;
-            $report->report_type = 'comment';
+            
+            if ($request->report_type === 'comment') {
+                $report->comment_id = $request->comment_id;
+            }
+            
+            $report->report_type = $request->report_type;
             $report->report_category = $request->report_category;
             $report->report_message = $request->report_message;
-            $report->report_status = 'pending'; // Pastikan field ini ada di tabel & fillable
+            $report->report_status = 'pending';
             $report->save();
 
             return response()->json(['success' => true, 'message' => 'Laporan terkirim!'], 201);

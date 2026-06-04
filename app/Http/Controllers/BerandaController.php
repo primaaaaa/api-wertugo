@@ -12,15 +12,17 @@ class BerandaController extends Controller
      */
     public function index(Request $request)
     {
-        // Ambil data UMKM untuk rekomendasi
-        // Syarat: Status harus 'active' (bisa ditambah 'verified' kalau ada field-nya)
         $rekomendasi = Umkm::with('user')
-            ->where('umkm_status', 'active') // Acak agar tiap buka beranda rekomendasinya segar
-            ->take(10) // Ambil 10 teratas saja agar loading tidak berat
+            ->where('umkm_status', 'active')
+            ->take(10)
             ->get();
 
-        // Nanti kalau fitur rating sudah jalan, kamu bisa ganti inRandomOrder() 
-        // dengan orderBy('rating', 'desc')
+        $rekomendasi->map(function ($umkm) {
+            $ulasan = \App\Models\Comment::where('umkm_id', $umkm->_id)->get();
+            $umkm->rating_avg = $ulasan->count() > 0 ? round($ulasan->avg('rating'), 1) : 0;
+            $umkm->total_ulasan = $ulasan->count();
+            return $umkm;
+        });
 
         return response()->json([
             'success' => true,
@@ -43,7 +45,7 @@ class BerandaController extends Controller
         }
 
         // Hitung rating (jika ada ulasan)
-        $ulasan = \App\Models\Comment::where('umkm_id', $umkm->user_id)->get();
+        $ulasan = \App\Models\Comment::where('umkm_id', $umkm->_id)->get();
         $rating = $ulasan->count() > 0 ? round($ulasan->avg('rating'), 1) : 0;
 
         return response()->json([
@@ -57,7 +59,11 @@ class BerandaController extends Controller
                 'jadwal_operasional' => $umkm->jadwal_operasional,
                 'media_sosial' => $umkm->media_sosial,
                 'rating_avg' => $rating,
-                'total_ulasan' => $ulasan->count()
+                'total_ulasan' => $ulasan->count(),
+                'user_id' => $umkm->user_id,                 // TAMBAHKAN INI UNTUK FITUR REPORT
+                'gambar'             => $umkm->gambar,       // TAMBAHKAN INI
+                'katalog_galeri'     => $umkm->katalog_galeri
+
             ]
         ], 200);
     }

@@ -16,6 +16,8 @@ use App\Http\Controllers\RatingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+
+
 // ==========================================
 // PENGUJIAN USER
 // ==========================================
@@ -56,7 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Autentikasi Lanjutan
     Route::post('/logout', [AccountController::class, 'logout']);
     Route::get('/profile', [AccountController::class, 'getProfile']);
-    Route::put('/profile/update', [AccountController::class, 'updateProfile']);
+    Route::post('/profile/update', [AccountController::class, 'updateProfile']);
 
     // ==========================================
     // 6.2 MODUL EKSPLORASI TEMPAT WISATA
@@ -75,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/umkm/place/status', [UmkmController::class, 'updateStatus']);
     Route::put('/umkm/place/schedule', [UmkmController::class, 'updateSchedule']);
     Route::post('/umkm/place/gallery', [UmkmController::class, 'uploadGallery']);
+    Route::put('/umkm/place/gallery', [UmkmController::class, 'uploadGallery']);
     Route::delete('/umkm/place/gallery/{id}', [UmkmController::class, 'deleteGallery']);
 
     // ==========================================
@@ -86,12 +89,14 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Endpoint tambahan di luar doc yang kamu miliki
     Route::get('/umkm/{umkm_id}/comments', [CommentController::class, 'getUmkmComments']); 
+    Route::post('/comments/{id}/reply', [CommentController::class, 'reply']);
 
     // ==========================================
     // 6.5 MODUL MANAJEMEN BUCKETLIST (KHUSUS TRAVELLER)
     // ==========================================
     Route::post('/bucketlist', [BucketlistController::class, 'store']);
     Route::get('/bucketlist', [BucketlistController::class, 'index']);
+    Route::get('/bucketlist/invitations', [BucketlistController::class, 'getInvitations']); // Di atas {id}
     Route::get('/bucketlist/{id}', [BucketlistController::class, 'show']);
     Route::post('/bucketlist/{id}/places', [BucketlistController::class, 'addPlace']);
     Route::delete('/bucketlist/{id}/places/{place_id}', [BucketlistController::class, 'removePlace']);
@@ -100,11 +105,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // 6.6 MODUL KOLABORASI GRUP BUCKETLIST
     // ==========================================
-    Route::get('/bucketlist/invitations', [BucketlistController::class, 'getInvitations']); // Di atas {id}
     Route::post('/bucketlist/{id}/invite', [BucketlistController::class, 'inviteUser']);
     Route::post('/bucketlist/{id}/join', [BucketlistController::class, 'joinSharedList']);
     Route::get('/bucketlist/{id}/members', [BucketlistController::class, 'getMembers']);
-
+    Route::put('/bucketlist/{id}/places/{place_id}', [BucketlistController::class, 'updatePlace']);
     // ==========================================
     // 6.7 MODUL LEGALITAS & VERIFIKASI AKUN BISNIS
     // ==========================================
@@ -114,14 +118,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // RUTE ADMINISTRATOR & ROOM (Bawaan dari Kodemu)
     // ==========================================
-    Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
+    // Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
     
     Route::get('/admin/users/{id}', [AccountController::class, 'showUserDetail']);
     Route::get('/reports/getallreport', [ReportController::class, 'index']);
     Route::put('/reports/{id}/tindak', [ReportController::class, 'tindakLaporan']);
     
+    // Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
     Route::get('/umkm/getumkm', [UmkmController::class, 'index']);
-    
+    Route::get('/user/getusers', [AccountController::class, 'getAllUsers']);
 
     // Verifikasi UMKM (Admin Side)
     Route::get('/umkm/getverifylist', [VerificationController::class, 'index']);

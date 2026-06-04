@@ -27,8 +27,17 @@ class PlaceController extends Controller
     {
         $keyword = $request->query('q');
         
+        $places = \App\Models\Umkm::with('user')
+            ->where('umkm_status', 'active')
+            ->where(function ($query) use ($keyword) {
+                $query->where('nama_usaha', 'like', "%{$keyword}%")
+                      ->orWhere('lokasi', 'like', "%{$keyword}%");
+            })
+            ->get();
+
         return response()->json([
             'success' => true,
+            'data' => $places
         ], 200);
     }
 
